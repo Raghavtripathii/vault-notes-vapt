@@ -80,6 +80,18 @@ app.post("/notes", authMiddleware, (req, res) => {
   });
 });
 
+app.get("/notes", authMiddleware, (req, res) => {
+  const query = `SELECT * FROM notes WHERE user_id = ?`;
+
+  db.all(query, [req.user.userId], (err, notes) => {
+    if (err) {
+      return res.status(500).json({ error: "Could not fetch notes" });
+    }
+
+    res.json(notes);
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
