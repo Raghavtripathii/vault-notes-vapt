@@ -32,6 +32,35 @@ app.post("/signup", (req, res) => {
   });
 });
 
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ error: "Username and password are required" });
+  }
+
+  const query = `SELECT * FROM users WHERE username = ?`;
+
+  db.get(query, [username], (err, user) => {
+    if (err) {
+      return res.status(500).json({ error: "Something went wrong" });
+    }
+
+    if (!user || user.password !== password) {
+      return res.status(401).json({ error: "Invalid username or password" });
+    }
+
+    // user is legit, hand them a token proving who they are
+    const token = jwt.sign(
+      { userId: user.id, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    res.json({ message: "Login successful", token });
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
