@@ -62,6 +62,24 @@ app.post("/login", (req, res) => {
   });
 });
 
+app.post("/notes", authMiddleware, (req, res) => {
+  const { title, content } = req.body;
+
+  if (!title || !content) {
+    return res.status(400).json({ error: "Title and content are required" });
+  }
+
+  const query = `INSERT INTO notes (user_id, title, content) VALUES (?, ?, ?)`;
+
+  db.run(query, [req.user.userId, title, content], function (err) {
+    if (err) {
+      return res.status(500).json({ error: "Could not save note" });
+    }
+
+    res.status(201).json({ message: "Note created!", noteId: this.lastID });
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
