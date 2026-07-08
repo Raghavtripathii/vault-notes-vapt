@@ -92,6 +92,24 @@ app.get("/notes", authMiddleware, (req, res) => {
   });
 });
 
+app.get("/notes/:id", authMiddleware, (req, res) => {
+  const noteId = req.params.id;
+
+  const query = `SELECT * FROM notes WHERE id = ? AND user_id = ?`;
+
+  db.get(query, [noteId, req.user.userId], (err, note) => {
+    if (err) {
+      return res.status(500).json({ error: "Could not fetch note" });
+    }
+
+    if (!note) {
+      return res.status(404).json({ error: "Note not found" });
+    }
+
+    res.json(note);
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
