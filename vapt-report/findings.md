@@ -50,3 +50,59 @@ db.get(query, [username, password], ...);
 ```
 This was in fact how the endpoint was originally implemented before
 this vulnerability was intentionally introduced for this assessment.
+
+
+## Finding #2: Insecure Direct Object Reference (IDOR) – Unauthorized Note Access
+
+**Severity:** High
+
+**Location:** `GET /notes/:id`
+
+**Vulnerability Class:** OWASP Top 10 — A01:2021 Broken Access Control
+
+**Description:**
+The endpoint for retrieving a single note by ID checks that the
+requester has a valid authentication token, but does not verify that
+the note actually belongs to the authenticated user. Note IDs are
+sequential integers, so any logged-in user can read any other user's
+private notes simply by changing the ID in the URL.
+
+**Proof of Concept:**
+1. Created account `victim1`, logged in, and created a note via
+   `POST /notes` with body:
+```json
+   { "title": "Victim Secret", "content": "My bank PIN is 4821" }
+```
+   Server responded with `noteId: 3`.
+
+2. Created a separate, unrelated account `attacker1` and logged in,
+   obtaining a valid token for this different account.
+
+3. Sent `GET /notes/3` using the `attacker1` token (not victim1's).
+
+4. Server responded with `200 OK` and returned victim1's full private
+   note content:
+```json
+   {
+     "id": 3,
+     "user_id": 3,
+     "title": "Victim Secret",
+     "content": "My bank PIN is 4821"
+   }
+```
+
+**Impact:**
+Any authenticated user can enumerate note IDs (e.g. 1, 2, 3, 4...) to
+read the private note content of every other user on the platform,
+regardless of ownership. In a real deployment, this could expose
+sensitive personal information at scale with minimal effort.
+
+**Remediation:**
+Always scope database lookups to the authenticated user's own ID,
+e.g.:
+```javascript
+const query = `SELECT * FROM notes WHERE id = ? AND user_id = ?`;
+db.get(query, [noteId, req.user.userId], ...);
+```
+This was in fact how the endpoint was originally implemented before
+this vulnerability was intentionally introduced for this assessment.
