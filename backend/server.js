@@ -99,10 +99,10 @@ app.get("/notes", authMiddleware, (req, res) => {
 
 app.get("/notes/:id", authMiddleware, (req, res) => {
   const noteId = req.params.id;
+// VULNERABLE ON PURPOSE: removed the "AND user_id = ?" ownership check.
+  const query = `SELECT * FROM notes WHERE id = ?`;
 
-  const query = `SELECT * FROM notes WHERE id = ? AND user_id = ?`;
-
-  db.get(query, [noteId, req.user.userId], (err, note) => {
+  db.get(query, [noteId], (err, note) => {
     if (err) {
       return res.status(500).json({ error: "Could not fetch note" });
     }
