@@ -4,8 +4,10 @@ const express = require("express");
 const db = require("./db");
 const jwt = require("jsonwebtoken");
 const authMiddleware = require("./authMiddleware");
+const cors = require("cors");
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 
 const PORT = 3000;
