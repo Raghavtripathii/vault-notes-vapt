@@ -42,14 +42,17 @@ app.post("/login", (req, res) => {
     return res.status(400).json({ error: "Username and password are required" });
   }
 
-  const query = `SELECT * FROM users WHERE username = ?`;
+  // VULNERABLE ON PURPOSE: both username and password are glued directly
+  // into the SQL string instead of using safe parameterized queries.
+  // This lets an attacker manipulate the query logic itself, not just the data.
+  const query = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;
 
-  db.get(query, [username], (err, user) => {
+  db.get(query, (err, user) => {
     if (err) {
       return res.status(500).json({ error: "Something went wrong" });
     }
 
-    if (!user || user.password !== password) {
+    if (!user) {
       return res.status(401).json({ error: "Invalid username or password" });
     }
 
