@@ -83,7 +83,7 @@ function NotesDashboard({ token }: NotesDashboardProps) {
         {notes.map((note) => (
           <li key={note.id}>
             <strong>{note.title}</strong>
-            <p>{note.content}</p>
+            <p dangerouslySetInnerHTML={{ __html: note.content }}></p>
           </li>
         ))}
       </ul>
