@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Signup from "./Signup";
 import Login from "./Login";
+import NotesDashboard from "./NotesDashboard";
 
 function App() {
   const [token, setToken] = useState("");
@@ -20,11 +21,7 @@ function App() {
         </>
       )}
 
-      {token && (
-        <div>
-          <p>You are logged in!</p>
-        </div>
-      )}
+      {token && <NotesDashboard token={token} />}
     </div>
   );
 }
