@@ -164,3 +164,59 @@ note content as plain text instead, which React escapes automatically:
 If rich text formatting is genuinely required, use a dedicated
 sanitization library (e.g. DOMPurify) to strip dangerous tags/attributes
 before rendering, rather than trusting raw user input.
+
+
+## Finding #4: Plaintext Password Storage
+
+**Severity:** Critical
+
+**Location:** `users` table (SQLite database), used in `POST /signup` and `POST /login`
+
+**Vulnerability Class:** OWASP Top 10 — A02:2021 Cryptographic Failures
+
+**Description:**
+User passwords are stored in the database exactly as entered at
+signup, with no hashing or encryption applied. The login route also
+compares passwords directly as plain strings. Anyone with access to
+the database file (via a backup, a misconfigured server, another
+vulnerability, or insider access) can read every user's real password
+in cleartext, with no additional effort required.
+
+**Proof of Concept:**
+Querying the `users` table directly:
+```javascript
+db.all("SELECT id, username, password FROM users", (err, rows) => console.log(rows));
+```
+returned every user's password as plain, human-readable text:
+[
+  { id: 1, username: 'raghav', password: 'test2005' },
+  { id: 2, username: 'Mahi Tripathi', password: '2004' },
+  { id: 3, username: 'victim1', password: 'victimpass123' },
+  { id: 4, username: 'attacker1', password: 'attackerpass123' }
+]
+**Impact:**
+Since many people reuse passwords across services, a leaked database
+here could let an attacker log into a victim's email, banking, or
+other accounts elsewhere. This is one of the most damaging and common
+real-world vulnerabilities, frequently responsible for large-scale
+credential-stuffing attacks after data breaches.
+
+**Remediation:**
+Never store passwords in plaintext. Hash passwords using a slow,
+purpose-built algorithm such as bcrypt before saving them, and compare
+hashes (never raw passwords) during login:
+```javascript
+const bcrypt = require("bcrypt");
+
+// at signup:
+const hashedPassword = await bcrypt.hash(password, 10);
+// store hashedPassword instead of the raw password
+
+// at login:
+const match = await bcrypt.compare(password, user.password);
+if (!match) {
+  return res.status(401).json({ error: "Invalid username or password" });
+}
+```
+This ensures that even if the database is ever exposed, actual
+passwords remain protected and cannot be trivially read.
