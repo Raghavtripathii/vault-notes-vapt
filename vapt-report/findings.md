@@ -220,3 +220,49 @@ if (!match) {
 ```
 This ensures that even if the database is ever exposed, actual
 passwords remain protected and cannot be trivially read.
+
+
+## Finding #5: Hardcoded Secret Exposed in Frontend Code
+
+**Severity:** Critical
+
+**Location:** `frontend/src/api.ts`
+
+**Vulnerability Class:** OWASP Top 10 — A02:2021 Cryptographic Failures / CWE-798 Use of Hard-coded Credentials
+
+**Description:**
+The backend's JWT signing secret was hardcoded directly into frontend
+source code. Frontend code is bundled and shipped to every visitor's
+browser, meaning any secret placed there is effectively public the
+moment the site is deployed — regardless of any backend-side
+protections. Additionally, since this project's repository is public
+on GitHub, the secret is also permanently visible in the commit
+history to anyone browsing the repository.
+
+**Proof of Concept:**
+1. Opened the live frontend application in Chrome DevTools → Sources
+   tab, and located `src/api.ts` served in plain, unminified form,
+   containing the literal string of the backend's JWT secret.
+2. Navigated to the public GitHub repository and confirmed the same
+   secret is visible directly in the file browser at
+   `frontend/src/api.ts`, accessible to any visitor without
+   authentication.
+
+**Impact:**
+Anyone with this secret can forge their own valid JWT tokens for any
+user ID of their choosing — completely bypassing the login process
+entirely, without needing a password, a SQL injection, or any other
+vulnerability. This is effectively a master key to the entire
+application's authentication system, and is arguably the most severe
+finding in this assessment since it undermines the authentication
+system at its root, regardless of any other fixes applied elsewhere.
+
+**Remediation:**
+- Never place backend secrets (API keys, signing secrets, database
+  credentials) in frontend code under any circumstances.
+- Store secrets only in backend environment variables (`.env`), which
+  should always be excluded from version control via `.gitignore`.
+- If a secret is ever accidentally committed to a public repository,
+  treat it as compromised immediately: rotate/regenerate the secret,
+  and consider the git history itself compromised unless properly
+  scrubbed (e.g. via `git filter-repo` or repository recreation).
