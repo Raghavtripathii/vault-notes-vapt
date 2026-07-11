@@ -27,6 +27,7 @@ way a junior VAPT analyst would deliver one to a client.
 
 **Backend:** Node.js, Express, SQLite, JWT (jsonwebtoken), CORS
 **Frontend:** React, TypeScript, Vite, Axios
+**Deployment:** Vercel (frontend), Render (backend)
 **Testing tool used:** Postman (manual request crafting and exploitation)
 
 ## Features
@@ -91,6 +92,10 @@ than left open to the public internet — the same way a real client engagement
 environment would be scoped and access-controlled. Frontend and backend are deployed
 separately (a static frontend vs. a persistent Node process for the SQLite-backed API),
 with `JWT_SECRET` set as an environment variable on the backend host.
+
+On the live deployment, Finding #5 (the exposed secret) can also be confirmed directly
+in the browser console by running `window.__leakedJwtSecret` — a slightly more realistic
+demonstration than source-file inspection alone, since it requires no code-reading at all.
 
 > ⚠️ **Note:** This application contains intentional security vulnerabilities and is for
 > educational/portfolio purposes only. Do not reuse any code from it in a production
